@@ -3,6 +3,11 @@ from xtquant import xtdata
 from config import FIXED_PERIOD, DEFAULT_EXCHANGE
 
 
+def prepare_market_data(stock_code: str):
+    '''确保行情数据已下载'''
+    full_code = f"{stock_code}.{DEFAULT_EXCHANGE}"
+    xtdata.download_history_data(full_code, FIXED_PERIOD)
+
 def fetch_market_data(
         stock_code: str,
         count: int
