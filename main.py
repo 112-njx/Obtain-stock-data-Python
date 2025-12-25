@@ -1,6 +1,5 @@
 from data_fetcher import fetch_market_data
-from utils import is_trading_time
-
+from time_utils import is_trading_time
 
 def main():
     stock_code = input("请输入股票代码（6位数字）：").strip()
@@ -15,9 +14,9 @@ def main():
         print("未能获取到行情数据，请确认是否在交易时间内运行程序")
         return
 
-    stock_name = get_stock_name(stock_code)
-    print(f"股票：{stock_name}（{stock_code}）")
-    print(data)
+    #打印行情数据：
+    for k, v in data.items():
+        print(f"{k}:\n{v}\n")
 
 
 if __name__ == '__main__':
