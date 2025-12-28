@@ -20,27 +20,29 @@ def fetch_market_data(stock_code: str, count: int):
             [QMT_PYTHON, QMT_SCRIPT, stock_code, str(count), output_csv],
             capture_output=True,
             text=True,
+            encoding='gbk',
             timeout=300
         )
 
-        print(result.stdout)
+        if result.stdout:
+            print(result.stdout)
 
         if result.returncode != 0:
             print(f"获取数据失败: {result.stderr}")
-            return None, "未知股票"
+            return None, "Unknown"
 
         if not os.path.exists(output_csv):
             print("CSV文件未生成")
-            return None, "未知股票"
+            return None, "Unknown"
 
         data = pd.read_csv(output_csv, index_col='timestamp', parse_dates=True)
 
-        stock_name = "未知股票"
+        stock_name = "Unknown"
         if os.path.exists(meta_file):
             try:
                 with open(meta_file, 'r', encoding='utf-8') as f:
                     meta = json.load(f)
-                    stock_name = meta.get('stock_name', '未知股票')
+                    stock_name = meta.get('stock_name', 'Unknown')
             except Exception:
                 pass
 
@@ -52,7 +54,7 @@ def fetch_market_data(stock_code: str, count: int):
 
     except subprocess.TimeoutExpired:
         print("获取数据超时")
-        return None, "未知股票"
+        return None, "Unknown"
     except Exception as e:
         print(f"获取数据异常: {e}")
-        return None, "未知股票"
+        return None, "Unknown"
