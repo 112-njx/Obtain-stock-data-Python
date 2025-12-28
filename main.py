@@ -1,7 +1,10 @@
 from data_fetcher import fetch_market_data
 from time_utils import is_trading_time
 from data_formatter import standardize_ohlcv
-from plotter import plot_candlestick
+from indicators import calculate_all_indicators
+from strategy import generate_strategy, print_strategy_report
+from plotter import plot_candlestick_with_indicators
+
 
 def main():
     stock_code = input("请输入股票代码（6位数字）：").strip()
@@ -22,9 +25,18 @@ def main():
         print("行情数据标准化失败")
         return
 
-    print(ohlcv_df)
+    print("\n" + "=" * 60)
+    print(f"Stock: {stock_name} ({stock_code}) | Data Count: {len(ohlcv_df)}")
+    print("=" * 60)
+    print(ohlcv_df.tail(10))
 
-    plot_candlestick(ohlcv_df, stock_name=stock_name)
+    indicators = calculate_all_indicators(ohlcv_df)
+    print("\n指标计算成功")
+
+    strategy_result = generate_strategy(ohlcv_df, indicators)
+    print_strategy_report(strategy_result, stock_name)
+
+    plot_candlestick_with_indicators(ohlcv_df, indicators, stock_name)
 
 
 if __name__ == '__main__':
