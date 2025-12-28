@@ -3,7 +3,7 @@ from time_utils import is_trading_time
 from data_formatter import standardize_ohlcv
 from indicators import calculate_all_indicators
 from strategy import generate_strategy, print_strategy_report
-from plotter import plot_candlestick_with_indicators
+from plotter import plot_candlestick_with_ma, plot_macd
 
 
 def main():
@@ -36,7 +36,11 @@ def main():
     strategy_result = generate_strategy(ohlcv_df, indicators)
     print_strategy_report(strategy_result, stock_name)
 
-    plot_candlestick_with_indicators(ohlcv_df, indicators, stock_name)
+    print("\n生成 K 线与均线图表")
+    plot_candlestick_with_ma(ohlcv_df, indicators, stock_name)
+
+    print("\n生成 MACD 指标图表")
+    plot_macd(ohlcv_df, indicators, stock_name)
 
 
 if __name__ == '__main__':
