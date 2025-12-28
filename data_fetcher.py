@@ -1,40 +1,58 @@
-# 行情数据获取模块
-from xtquant import xtdata
-from config import FIXED_PERIOD, DEFAULT_EXCHANGE
+import subprocess
+import sys
+import os
+import json
+import pandas as pd
+
+QMT_PYTHON = r"D:\国金QMT交易端模拟\bin.x64\pythonw.exe"
+QMT_SCRIPT = r"D:\Obtain-stock-data-Python\Obtain-stock-data-Python\qmt_fetcher.py"
 
 
-def prepare_market_data(stock_code: str):
-    '''确保行情数据已下载'''
-    full_code = f"{stock_code}.{DEFAULT_EXCHANGE}"
-    xtdata.download_history_data(full_code, FIXED_PERIOD)
+def fetch_market_data(stock_code: str, count: int):
+    """通过QMT Python环境获取股票数据"""
+    output_csv = f"data_{stock_code}.csv"
+    meta_file = f"data_{stock_code}_meta.json"
 
-def fetch_market_data(
-        stock_code: str,
-        count: int
-):
-    #获取指定股票的原始行情数据（1分钟K线）
-    #准备股票数据
-    prepare_market_data(stock_code)
+    print(f"正在调用QMT Python环境获取数据...")
 
-    #尝试打印股票名称
-    stock_name = "未知股票"
     try:
-        detail = xtdata.get_instrument_detail(f"{stock_code}.{DEFAULT_EXCHANGE}")
-        if isinstance(detail, dict):
-            stock_name = detail.get("InstrumentName", stock_name)
-    except Exception:
-        pass
+        result = subprocess.run(
+            [QMT_PYTHON, QMT_SCRIPT, stock_code, str(count), output_csv],
+            capture_output=True,
+            text=True,
+            timeout=300
+        )
 
-    print(f"股票代码：{stock_code}")
-    print(f"股票名称：{stock_name}")
-    print("-" * 40)
-    full_code = f"{stock_code}.{DEFAULT_EXCHANGE}"
+        print(result.stdout)
 
-    data = xtdata.get_market_data(
-        field_list=['open', 'high', 'low', 'close', 'volume'],
-        stock_list=[full_code],
-        period=FIXED_PERIOD,
-        count=count
-    )
+        if result.returncode != 0:
+            print(f"获取数据失败: {result.stderr}")
+            return None, "未知股票"
 
-    return data
+        if not os.path.exists(output_csv):
+            print("CSV文件未生成")
+            return None, "未知股票"
+
+        data = pd.read_csv(output_csv, index_col='timestamp', parse_dates=True)
+
+        stock_name = "未知股票"
+        if os.path.exists(meta_file):
+            try:
+                with open(meta_file, 'r', encoding='utf-8') as f:
+                    meta = json.load(f)
+                    stock_name = meta.get('stock_name', '未知股票')
+            except Exception:
+                pass
+
+        print(f"成功获取 {len(data)} 条数据")
+        print(f"股票名称: {stock_name}")
+        print("-" * 40)
+
+        return data, stock_name
+
+    except subprocess.TimeoutExpired:
+        print("获取数据超时")
+        return None, "未知股票"
+    except Exception as e:
+        print(f"获取数据异常: {e}")
+        return None, "未知股票"
